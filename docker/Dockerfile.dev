@@ -1,0 +1,37 @@
+# ============================================
+# 开发环境 Dockerfile
+# 支持热重载、调试工具
+# ============================================
+
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# 安装开发依赖
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libpq-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# 复制并安装依赖
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# 额外安装开发工具
+RUN pip install --no-cache-dir \
+    pytest \
+    pytest-asyncio \
+    black \
+    ruff \
+    mypy \
+    watchfiles
+
+# 复制代码（开发模式下通常用 volume 挂载）
+COPY . .
+
+EXPOSE 8000
+
+# 开发模式：自动重载
+CMD ["uvicorn", "src.api:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

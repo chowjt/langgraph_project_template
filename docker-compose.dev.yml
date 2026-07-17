@@ -1,0 +1,43 @@
+# ============================================
+# Docker Compose - 开发环境编排
+# 支持热重载、代码卷挂载
+# ============================================
+
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    container_name: langgraph-app-dev
+    ports:
+      - "8000:8000"
+    volumes:
+      # 代码热重载：宿主机修改实时同步到容器
+      - ./src:/app/src:ro
+      - ./.env:/app/.env:ro
+    environment:
+      - APP_ENV=development
+      - APP_DEBUG=true
+      - CHECKPOINTER_TYPE=memory
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  # 可选：开发环境也使用 PostgreSQL 测试持久化
+  postgres:
+    image: postgres:16-alpine
+    container_name: langgraph-postgres-dev
+    environment:
+      POSTGRES_USER: langgraph
+      POSTGRES_PASSWORD: langgraph
+      POSTGRES_DB: langgraph
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_dev_data:
